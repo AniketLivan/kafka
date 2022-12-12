@@ -21,21 +21,21 @@ const consume = async () => {
 			console.log(`received message: ${message.key} ${message.value} ${message.offset}`)
             let processedSuccessfully = true;
             do {
-                try{
-                    session.startTransaction();
-                    const msg1 = await Message.create([
+                try{                                 
+                    session.startTransaction();                    
+                    const user = await Message.create([
                         { 
-                            id: message.key,
+                            key: message.key,
                             value: message.value
                         }
                     ], { session });
-                    const msg2 = await Message2.create([
+
+                    await Message2.create([
                         {
-                            id: message.key,
+                            key: message.key,
                             value: message.value
                         }
-                    ], {session});
-                    await session.commitTransaction();
+                    ], { session });
                     await producer.send({
                         topic2,
                         messages: [
@@ -45,13 +45,14 @@ const consume = async () => {
                             },
                         ],
                     })
+                    await session.commitTransaction();
                     await sleep(2000);
                 }catch(error){
                     console.log(error)
                     await session.abortTransaction();
                     processedSuccessfully = false
-
-                }}while(processedSuccessfully==false)
+                }
+            }while(!processedSuccessfully)
 
 
 		},
@@ -64,7 +65,10 @@ const sleep = (ms) => {
     });  
 }
 
-module.exports = consume
-// consume().catch((err) => {
-// 	console.error("error in consumer: ", err)
-// })
+// module.exports = consume
+consume().catch((err) => {
+	console.error("error in consumer: ", err)
+})
+
+//mongod --replSet rs0 --dbpath=C:\data\db --port 27018 --bind_ip localhost
+//mongo --port 27018

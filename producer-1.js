@@ -30,4 +30,7 @@ const produce = async () => {
 	}, 10000)
 }
 
-module.exports = produce
+produce().catch((err) => {
+	console.error("error in producer: ", err)
+})
+// module.exports = produce
