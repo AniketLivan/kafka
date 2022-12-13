@@ -1,4 +1,4 @@
-const { Kafka } = require("kafkajs")
+const { Kafka, KafkaJSBrokerNotFound } = require("kafkajs")
 const conn = require('./db/db');
 const Message = require('./model/message')
 const Message2 = require('./model/message-table')
@@ -19,6 +19,8 @@ const consume = async () => {
 	await consumer.subscribe({ topics: [topic] })
     await producer.connect()
     const session = await conn.startSession();
+
+    let msg = ""
 	await consumer.run({
         autoCommit: false,
 		eachMessage: async ({ message }) => {
@@ -33,13 +35,22 @@ const consume = async () => {
                             value: message.value
                         }
                     ], { session });
-
+                    if(msg=="" ){
+                        msg = message.key
+                    }
+                    if(message.offset%5==0 && msg != message.key){
+                        msg = message.key
+                        throw KafkaJSBrokerNotFound;
+                    } 
+                    
+                    
                     await Message2.create([
                         {
                             key: message.key,
                             value: message.value
                         }
                     ], { session });
+                
                     await producer.send({
                         topic: "test-2",
                         messages: [
@@ -53,6 +64,7 @@ const consume = async () => {
                     consumer.commitOffsets([
                         { topic: 'test-1', partition: 0, offset: message.offset }])
                     console.log("successful commit")
+                    processedSuccessfully = true
                     await sleep(2000);
                 }catch(error){
                     console.log(error)

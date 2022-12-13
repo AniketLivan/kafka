@@ -1,6 +1,6 @@
 const mongoose = require('mongoose'); 
 let config = {db:'mongodb://127.0.0.1:27018/kafka?replicaSet=rs0'}
-var options = {
+let options = {
 
   db: {
       native_parser: true
