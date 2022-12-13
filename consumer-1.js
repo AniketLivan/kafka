@@ -15,12 +15,12 @@ const producer = kafka_producer.producer()
 
 
 const consume = async () => {
-    let val = {}
 	await consumer.connect()
-	await consumer.subscribe({ topics: [topic, topic2] })
+	await consumer.subscribe({ topics: [topic] })
     await producer.connect()
     const session = await conn.startSession();
 	await consumer.run({
+        autoCommit: false,
 		eachMessage: async ({ message }) => {
 			console.log(`received message: ${message.key} ${message.value} ${message.offset}`)
             let processedSuccessfully = true;
@@ -50,6 +50,9 @@ const consume = async () => {
                         ],
                     })
                     await session.commitTransaction();
+                    consumer.commitOffsets([
+                        { topic: 'test-1', partition: 0, offset: message.offset }])
+                    console.log("successful commit")
                     await sleep(2000);
                 }catch(error){
                     console.log(error)
