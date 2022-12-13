@@ -6,15 +6,19 @@ const Message2 = require('./model/message-table')
 const clientId = "my-app"
 const brokers = ["localhost:9092"]
 const topic = "test-1"
-
 const kafka = new Kafka({ clientId, brokers })
 const consumer = kafka.consumer({ groupId: clientId })
-const producer = kafka.producer()
-const topic2 = "test-2"
+
+const client_producer_id = "my-app-2"
+const kafka_producer = new Kafka({client_producer_id, brokers})
+const producer = kafka_producer.producer()
+
 
 const consume = async () => {
+    let val = {}
 	await consumer.connect()
-	await consumer.subscribe({ topic })
+	await consumer.subscribe({ topics: [topic, topic2] })
+    await producer.connect()
     const session = await conn.startSession();
 	await consumer.run({
 		eachMessage: async ({ message }) => {
@@ -37,11 +41,11 @@ const consume = async () => {
                         }
                     ], { session });
                     await producer.send({
-                        topic2,
+                        topic: "test-2",
                         messages: [
                             {
                                 key: message.key,
-                                value: message.value
+                                value: `{val:${message.value},completed: ${true}}`,
                             },
                         ],
                     })
